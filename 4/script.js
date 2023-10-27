@@ -21,19 +21,70 @@ function runCode(){
   const testMatrix = mat4.create();                 //this function creates a nwe matrix array
   mat4.translate(testMatrix,testMatrix,[-1,-3,0]);  //mat4.translate(in, out, [x, y, z])
 
-  console.log(testMatrix);
-
   // creating vertex data
   const vertexPosition = [
-    0,1,
-    1,-1,
-    -1,-1,
+    //front
+    0.5,0.5,0.5,
+    -0.5,-0.5,0.5,
+    -0.5,0.5,0.5,
+    -0.5,-0.5,0.5,
+    0.5,0.5,0.5,
+    0.5,-0.5,0.5,
+
+    //left
+    0.5,0.5,-0.5,
+    0.5,-0.5,0.5,
+    0.5,0.5,0.5,
+    0.5,-0.5,0.5,
+    0.5,0.5,-0.5,
+    0.5,-0.5,-0.5,
+    
+    //right
+    -0.5,0.5,0.5,
+    -0.5,-0.5,-0.5,
+    -0.5,0.5,-0.5,
+    -0.5,-0.5,-0.5,
+    -0.5,0.5,0.5,
+    -0.5,-0.5,0.5,
+
+    
+    //back
+    0.5,-0.5,-0.5,
+    0.5,0.5,-0.5,
+    -0.5,-0.5,-0.5,
+    -0.5,0.5,-0.5,
+    -0.5,-0.5,-0.5,
+    0.5,0.5,-0.5,
+    
+
+
+    //top
+    -0.5,0.5,0.5,
+    0.5,0.5,-0.5,
+    0.5,0.5,0.5,
+    0.5,0.5,-0.5,
+    -0.5,0.5,0.5,
+    -0.5,0.5,-0.5,
+
+
+    //bottom
+    -0.5,-0.5,-0.5,
+    0.5,-0.5,0.5,
+    0.5,-0.5,-0.5,
+    0.5,-0.5,0.5,
+    -0.5,-0.5,-0.5,
+    -0.5,-0.5,0.5,
   ];
-  const vertexColor = [
-    0,1,0,
-    1,0,0,
-    0,0,1
-  ]
+  function randomColor(){
+    return [Math.random(),Math.random(), Math.random()]
+  }
+  const vertexColor = [];
+  for(let i=0;i<vertexPosition.length/18;i++){
+    let nextColor = randomColor();
+    for(let j=0;j<6;j++){
+      vertexColor.push(...nextColor);
+    }
+  }
 
   // creating buffers
   const positionBuffer = gl.createBuffer();
@@ -49,7 +100,7 @@ function runCode(){
   gl.shaderSource(vertexShader, `
     precision mediump float;
 
-    attribute vec2 position;
+    attribute vec3 position;
     attribute vec3 color;
     varying vec3 vColor;
 
@@ -57,7 +108,7 @@ function runCode(){
 
     void main() {
       vColor = color;
-      gl_Position = matrix * vec4(position, 0, 1);
+      gl_Position = matrix * vec4(position, 1);
     }
   `);
   gl.compileShader(vertexShader);
@@ -101,10 +152,10 @@ function runCode(){
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.vertexAttribPointer(
     positionLocation,                 //attribute location in program
-    2,                                //number of elements per attribute
+    3,                                //number of elements per attribute
     gl.FLOAT,                         //type of elements
     gl.FALSE,                         //normalization
-    2 * Float32Array.BYTES_PER_PIXEL, //size of an individual vertex
+    3 * Float32Array.BYTES_PER_PIXEL, //size of an individual vertex
     0                                 //offset from the begining of the array
   );
 
@@ -123,6 +174,7 @@ function runCode(){
 
   // selecting what shader program to use
   gl.useProgram(program);
+  gl.enable(gl.DEPTH_TEST);   //if enabled, fix overlaping isues
 
   const uniformPointers = {
     matrix: gl.getUniformLocation(program,"matrix")
@@ -133,14 +185,15 @@ function runCode(){
 
   function loop(){
     
+  mat4.rotateX(matrix,matrix, Math.PI/2/60);
   mat4.rotateZ(matrix,matrix, Math.PI/2/30);
+
   gl.uniformMatrix4fv(uniformPointers.matrix,false,matrix);
-    requestAnimationFrame(loop);
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.drawArrays(gl.TRIANGLES, 0, vertexPosition.length/3);
+  setTimeout(loop,60)
   }
   loop();
 
-  console.log(uniformPointers.matrix);
 
 
 
